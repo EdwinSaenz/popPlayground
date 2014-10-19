@@ -26,7 +26,7 @@
 
 #pragma mark - POPAnimationDelegate
 
-- (void)pop_animationDidApply:(POPAnimation *)anim {
+- (void)pop_animationDidApply:(POPDecayAnimation *)anim {
     BOOL isDragViewOutsideOfSuperView = !CGRectContainsRect(self.view.frame, self.dragView.frame);
     if(isDragViewOutsideOfSuperView) {
         long viewWidth = self.view.frame.size.width;
@@ -35,20 +35,34 @@
         CGPoint upperEdge = CGPointMake(self.dragView.center.x, self.dragView.center.y - 50);
         CGPoint rightEdge = CGPointMake(self.dragView.center.x + 50, self.dragView.center.y);
         CGPoint lowerEdge = CGPointMake(self.dragView.center.x, self.dragView.center.y + 50);
-        
+        //
+        [self.dragView.layer pop_removeAllAnimations];
+        CGPoint currentVelocity = [anim.velocity CGPointValue];
+        POPDecayAnimation *newAnimation = [POPDecayAnimation animationWithPropertyNamed:kPOPLayerPosition];
         if(rightEdge.x > viewWidth) {
-            NSLog(@"circle is past the right edge");
+            CGPoint velocity = CGPointMake(-currentVelocity.x, currentVelocity.y);
+            newAnimation.velocity = [NSValue valueWithCGPoint:velocity];
+            self.dragView.center = CGPointMake(viewWidth - (self.dragView.frame.size.width / 2), self.dragView.center.y);
         }
         else if(leftEdge.x < 0) {
-            NSLog(@"circle is past the left edge");
+            CGPoint velocity = CGPointMake(-currentVelocity.x, currentVelocity.y);
+            newAnimation.velocity = [NSValue valueWithCGPoint:velocity];
+            self.dragView.center = CGPointMake(self.dragView.frame.size.width / 2, self.dragView.center.y);
         }
         
         if(lowerEdge.y > viewHeight) {
-            NSLog(@"circle is past the lower edge");
+            CGPoint velocity = CGPointMake(currentVelocity.x, -currentVelocity.y);
+            newAnimation.velocity = [NSValue valueWithCGPoint:velocity];
+            self.dragView.center = CGPointMake(self.dragView.center.x, viewHeight - (self.dragView.frame.size.height / 2));
         }
         else if(upperEdge.y < 0) {
-            NSLog(@"circle is past the upper edge");
+            CGPoint velocity = CGPointMake(currentVelocity.x, -currentVelocity.y);
+            newAnimation.velocity = [NSValue valueWithCGPoint:velocity];
+            self.dragView.center = CGPointMake(self.dragView.center.x, self.dragView.frame.size.height / 2);
         }
+        
+        newAnimation.delegate = self;
+        [self.dragView.layer pop_addAnimation:newAnimation forKey:@"layerPositionAnimation"];
     }
 }
 
