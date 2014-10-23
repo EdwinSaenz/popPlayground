@@ -11,6 +11,10 @@
 
 @interface DecayViewController () <POPAnimationDelegate>
 @property(nonatomic) UIControl *dragView;
+@property(nonatomic) UIDynamicAnimator *animator;
+@property(nonatomic) UIGravityBehavior *gravity;
+@property(nonatomic) UICollisionBehavior *collision;
+@property(nonatomic) UIDynamicItemBehavior *behavior;
 - (void)addDragView;
 - (void)touchDown:(UIControl *)sender;
 - (void)handlePan:(UIPanGestureRecognizer *)recognizer;
@@ -22,6 +26,12 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor blueColor];
     [self addDragView];
+    self.animator = [[UIDynamicAnimator alloc] initWithReferenceView:self.view];
+    self.gravity = [[UIGravityBehavior alloc] initWithItems:@[self.dragView]];
+    self.collision = [[UICollisionBehavior alloc] initWithItems:@[self.dragView]];
+    self.collision.translatesReferenceBoundsIntoBoundary = YES;
+    self.behavior = [[UIDynamicItemBehavior alloc] initWithItems:@[self.dragView]];
+    self.behavior.elasticity = 1.0;
 }
 
 #pragma mark - POPAnimationDelegate
@@ -71,18 +81,29 @@
 - (void)addDragView {
     UIPanGestureRecognizer *recognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self
                                                                                  action:@selector(handlePan:)];
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self
+                                                                                    action:@selector(handleTap:)];
+    [tapRecognizer setNumberOfTouchesRequired:2];
     self.dragView = [[UIControl alloc] initWithFrame:CGRectMake(0, 0, 100, 100)];
     self.dragView.center = self.view.center;
     self.dragView.layer.cornerRadius = CGRectGetWidth(self.dragView.bounds) / 2;
     self.dragView.backgroundColor = [UIColor redColor];
     [self.dragView addTarget:self action:@selector(touchDown:) forControlEvents:UIControlEventTouchDown];
     [self.dragView addGestureRecognizer:recognizer];
+    [self.dragView addGestureRecognizer:tapRecognizer];
     //
     [self.view addSubview:self.dragView];
 }
 
 - (void)touchDown:(UIControl *)sender {
     [sender.layer pop_removeAllAnimations];
+}
+
+- (void)handleTap:(UITapGestureRecognizer *)recognizer {
+    [self.animator removeAllBehaviors];
+    [self.animator addBehavior:self.gravity];
+    [self.animator addBehavior:self.collision];
+    [self.animator addBehavior:self.behavior];
 }
 
 - (void)handlePan:(UIPanGestureRecognizer *)recognizer {
