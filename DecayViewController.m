@@ -97,6 +97,7 @@
 
 - (void)touchDown:(UIControl *)sender {
     [sender.layer pop_removeAllAnimations];
+    [self.animator removeAllBehaviors];
 }
 
 - (void)handleTap:(UITapGestureRecognizer *)recognizer {
